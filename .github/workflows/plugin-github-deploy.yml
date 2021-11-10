@@ -22,24 +22,22 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2.3.1
-        with:
-          path: ${{ env.PLUGIN_NAME }}
 
       - name: Build & create zip
         run: |
-          if test -f "./${PLUGIN_NAME}/src/Resources/app/administration/package.json"; then
-              npm install --prefix "./${PLUGIN_NAME}/src/Resources/app/administration/"
+          if test -f "./src/Resources/app/administration/package.json"; then
+              npm install --prefix "./src/Resources/app/administration/"
           fi
 
-          if test -f "./${PLUGIN_NAME}/src/Resources/app/storefront/package.json"; then
-              npm install --prefix "./${PLUGIN_NAME}/src/Resources/app/storefront/"
+          if test -f "./src/Resources/app/storefront/package.json"; then
+              npm install --prefix "./src/Resources/app/storefront/"
           fi
 
-          if test -f "./${PLUGIN_NAME}/src/Resources/app/package.json"; then
-              npm install --prefix "./${PLUGIN_NAME}/src/Resources/app/"
+          if test -f "./src/Resources/app/package.json"; then
+              npm install --prefix "./src/Resources/app/"
           fi
 
-          cp -r "./${PLUGIN_NAME}" "/plugins/${PLUGIN_NAME}"
+          cp -r "./" "/plugins"
 
           start-mysql
           pack-plugin "${PLUGIN_NAME}"
@@ -53,7 +51,7 @@ jobs:
       - name: Unzip
         run: |
           unzip -o -q "${PLUGINNAME}.zip" -d ./toDeploy
-          mv ./toDeploy/*/* ./${PLUGIN_NAME}
+          mv ./toDeploy/*/* ./
           rm -rf ./toDeploy
 
       - name: setup git config
@@ -63,7 +61,6 @@ jobs:
 
       - name: commit
         run: |
-          cd ./${PLUGIN_NAME}
           git add -f *
           git commit -m "Build release"
 
