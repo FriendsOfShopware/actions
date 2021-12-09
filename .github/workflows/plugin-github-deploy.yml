@@ -81,27 +81,11 @@ jobs:
           echo "GITHUB_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
           git tag ${PLUGIN_VERSION}
           git push origin ${PLUGIN_VERSION}
-#          git push -f origin HEAD:release/${PLUGIN_VERSION}
-
-      - name: Bump version and push tag
-        if: steps.checkTag.outputs.exists != 'true'
-        id: tag_version
-        uses: mathieudutour/github-tag-action@v6.0
-        with:
-          tag_prefix: ""
-          github_token: ${{ env.GITHUB_TOKEN }}
-          custom_tag: ${{ env.PLUGIN_VERSION }}
-          commit_sha: ${{ env.GITHUB_SHA }}
-
-      - name: Remove release-branch
-        if: steps.checkTag.outputs.exists != 'true'
-        run: |
-          git push origin --delete release/${PLUGIN_VERSION}
 
       - name: Create a GitHub release
         if: steps.checkTag.outputs.exists != 'true'
         uses: ncipollo/release-action@v1
         with:
-          tag: ${{ steps.tag_version.outputs.new_version }}
-          name: Release ${{ steps.tag_version.outputs.new_version }}
-          body: ${{ steps.tag_version.outputs.changelog }}
+          tag: ${{ env.PLUGIN_VERSION }}
+          name: ${{ env.PLUGIN_VERSION }}
+          body: Release ${{ env.PLUGIN_VERSION }}
