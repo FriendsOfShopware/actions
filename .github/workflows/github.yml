@@ -7,6 +7,11 @@ on:
         description: 'Your extension name'
         required: true
         type: string
+      shopwareVersion:
+        description: 'The shopware version to build the extension with'
+        required: false
+        type: string
+        default: '6.4.0'
     secrets:
       ghToken:
         required: true
@@ -17,7 +22,7 @@ env:
 
 jobs:
   Build:
-    container: ghcr.io/friendsofshopware/platform-plugin-dev:v6.4.0
+    container: ghcr.io/friendsofshopware/platform-plugin-dev:v${{ inputs.shopwareVersion }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
