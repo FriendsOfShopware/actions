@@ -41,7 +41,7 @@ jobs:
           cp -r "./" "/plugins/${EXTENSION_NAME}"
 
           start-mysql
-          plugin-uploader ext:prepare /plugins/${PLUGIN_NAME}/
+          plugin-uploader ext:prepare /plugins/${EXTENSION_NAME}/
           pack-plugin "${EXTENSION_NAME}"
 
       - name: Upload Artefact
