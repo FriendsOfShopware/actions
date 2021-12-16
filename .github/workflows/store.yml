@@ -81,12 +81,6 @@ jobs:
               if: steps.checkTag.outputs.exists != 'true'
               run: plugin-uploader ext:update $(pwd)/
 
-            - name: StoreUpload
-              if: steps.checkTag.outputs.exists != 'true'
-              run: plugin-uploader ext:upload $(pwd)/${PLUGIN_NAME}.zip --createRelease
-              env:
-                  GITHUB_TOKEN: ${{ secrets.ghToken }}
-
             - name: Unzip
               run: |
                   unzip -o -q "${EXTENSION_NAME}.zip" -d ./toDeploy
@@ -121,3 +115,9 @@ jobs:
                   tag: ${{ env.EXTENSION_VERSION }}
                   name: ${{ env.EXTENSION_VERSION }}
                   body: ${{ steps.tag_version.outputs.changelog }}
+
+            - name: StoreUpload
+              if: steps.checkTag.outputs.exists != 'true'
+              run: plugin-uploader ext:upload $(pwd)/${PLUGIN_NAME}.zip
+              env:
+                GITHUB_TOKEN: ${{ secrets.ghToken }}
