@@ -5,11 +5,11 @@ on:
           extensionName:
             required: true
             type: string
-        shopwareVersion:
-            description: 'The shopware version to build the extension with'
-            required: false
-            type: string
-            default: '6.4.0'
+          shopwareVersion:
+              description: 'The shopware version to build the extension with'
+              required: false
+              type: string
+              default: '6.4.0'
         secrets:
           accountUser:
             required: true
