@@ -69,16 +69,12 @@ jobs:
               env:
                   GITHUB_TOKEN: ${{ secrets.ghToken }}
 
-            - name: StoreUpdate
-              if: steps.checkTag.outputs.exists != 'true' || contains(github.event.head_commit.message, '[store update]')
-              run: plugin-uploader ext:update $(pwd)/
-
             - name: Validate Zip
               if: steps.checkTag.outputs.exists != 'true'
               run: plugin-uploader ext:validate $(pwd)/${PLUGIN_NAME}.zip
 
             - name: StoreUpdate
-              if: steps.checkTag.outputs.exists != 'true'
+              if: steps.checkTag.outputs.exists != 'true' || contains(github.event.head_commit.message, '[store update]')
               run: plugin-uploader ext:update $(pwd)/
 
             - name: Unzip
