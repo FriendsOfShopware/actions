@@ -114,6 +114,6 @@ jobs:
 
             - name: StoreUpload
               if: steps.checkTag.outputs.exists != 'true'
-              run: plugin-uploader ext:upload $(pwd)/${PLUGIN_NAME}.zip
+              run: plugin-uploader ext:upload $(pwd)/${EXTENSION_NAME}.zip
               env:
                 GITHUB_TOKEN: ${{ secrets.ghToken }}
