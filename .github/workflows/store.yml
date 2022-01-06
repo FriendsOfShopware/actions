@@ -34,15 +34,15 @@ jobs:
             - name: Build & create zip
               run: |
                   if test -f "./src/Resources/app/administration/package.json"; then
-                      npm install --prefix "./src/Resources/app/administration/"
+                      npm install --prefix "./src/Resources/app/administration/" --unsafe-perm
                   fi
                   
                   if test -f "./src/Resources/app/storefront/package.json"; then
-                      npm install --prefix "./src/Resources/app/storefront/"
+                      npm install --prefix "./src/Resources/app/storefront/" --unsafe-perm
                   fi
                   
                   if test -f "./src/Resources/app/package.json"; then
-                      npm install --prefix "./src/Resources/app/"
+                      npm install --prefix "./src/Resources/app/" --unsafe-perm
                   fi
                   
                   rm -rf ./.github
