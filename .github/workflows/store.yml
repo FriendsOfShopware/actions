@@ -86,9 +86,11 @@ jobs:
             - name: Unzip
               run: |
                   unzip -o -q "${EXTENSION_NAME}.zip" -d ./toDeploy
+                  mv "${EXTENSION_NAME}.zip" /tmp/
                   find ./ -maxdepth 1 ! -name "toDeploy" ! -name ".git" ! -name "." ! -name ".." -exec rm -rf {} \;
                   mv ./toDeploy/${EXTENSION_NAME}/* ./
                   rm -rf ./toDeploy
+                  rm -rf ./vendor
 
             - name: Generate changelog
               if: steps.checkTag.outputs.exists != 'true'
@@ -114,6 +116,7 @@ jobs:
               if: steps.checkTag.outputs.exists != 'true'
               uses: ncipollo/release-action@v1
               with:
+                  artifacts: /tmp/${{ env.EXTENSION_NAME }}.zip
                   tag: ${{ env.EXTENSION_VERSION }}
                   name: ${{ env.EXTENSION_VERSION }}
                   body: ${{ steps.tag_version.outputs.changelog }}
