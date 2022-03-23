@@ -12,12 +12,18 @@ on:
         required: false
         type: string
         default: '6.4.0'
+      cliVersion:
+        description: 'The shopware-cli version to build the extension with'
+        required: false
+        type: string
+        default: '0.1.26'
     secrets:
       ghToken:
         required: true
 
 env:
   EXTENSION_NAME: ${{ inputs.extensionName }}
+  SHOPWARE_CLI_VERSION: ${{ inputs.cliVersion }}
 
 jobs:
   Build:
@@ -27,26 +33,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2.3.1
 
-      - name: Build & create zip
+      - name: Download shopware-cli
         run: |
-          if test -f "./src/Resources/app/administration/package.json"; then
-              npm install --prefix "./src/Resources/app/administration/" --unsafe-perm
-          fi
+          wget -q https://github.com/FriendsOfShopware/shopware-cli/releases/download/${SHOPWARE_CLI_VERSION}/shopware-cli_${SHOPWARE_CLI_VERSION}_Linux_x86_64.tar.gz
+          tar -zxf shopware-cli_*.tar.gz /usr/bin/shopware-cli
+          rm shopware-cli_*.tar.gz
 
-          if test -f "./src/Resources/app/storefront/package.json"; then
-              npm install --prefix "./src/Resources/app/storefront/" --unsafe-perm
-          fi
-
-          if test -f "./src/Resources/app/package.json"; then
-              npm install --prefix "./src/Resources/app/" --unsafe-perm
-          fi
-
-          rm -rf ./.github
-          cp -r "./" "/plugins/${EXTENSION_NAME}"
-
-          start-mysql
-          plugin-uploader ext:prepare /plugins/${EXTENSION_NAME}/
-          pack-plugin "${EXTENSION_NAME}"
+          - name: Build & create zip
+            run: |
+              if test -f "./src/Resources/app/administration/package.json"; then
+                  npm install --prefix "./src/Resources/app/administration/" --unsafe-perm
+              fi
+              
+              if test -f "./src/Resources/app/storefront/package.json"; then
+                  npm install --prefix "./src/Resources/app/storefront/" --unsafe-perm
+              fi
+              
+              if test -f "./src/Resources/app/package.json"; then
+                  npm install --prefix "./src/Resources/app/" --unsafe-perm
+              fi
+              
+              rm -rf ./.github
+              
+              /usr/bin/shopware-cli extension zip . --disable-git
 
       - name: Upload Artefact
         uses: actions/upload-artifact@v2
