@@ -40,23 +40,23 @@ jobs:
           mv shopware-cli /usr/bin/shopware-cli
           rm shopware-cli_*.tar.gz
 
-          - name: Build & create zip
-            run: |
-              if test -f "./src/Resources/app/administration/package.json"; then
-                  npm install --prefix "./src/Resources/app/administration/" --unsafe-perm
-              fi
-              
-              if test -f "./src/Resources/app/storefront/package.json"; then
-                  npm install --prefix "./src/Resources/app/storefront/" --unsafe-perm
-              fi
-              
-              if test -f "./src/Resources/app/package.json"; then
-                  npm install --prefix "./src/Resources/app/" --unsafe-perm
-              fi
-              
-              rm -rf ./.github
-              
-              /usr/bin/shopware-cli extension zip . --disable-git
+      - name: Build & create zip
+        run: |
+          if test -f "./src/Resources/app/administration/package.json"; then
+              npm install --prefix "./src/Resources/app/administration/" --unsafe-perm
+          fi
+          
+          if test -f "./src/Resources/app/storefront/package.json"; then
+              npm install --prefix "./src/Resources/app/storefront/" --unsafe-perm
+          fi
+          
+          if test -f "./src/Resources/app/package.json"; then
+              npm install --prefix "./src/Resources/app/" --unsafe-perm
+          fi
+          
+          rm -rf ./.github
+          
+          /usr/bin/shopware-cli extension zip . --disable-git
 
       - name: Upload Artefact
         uses: actions/upload-artifact@v2
