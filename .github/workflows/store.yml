@@ -39,29 +39,16 @@ jobs:
 
             - name: Download shopware-cli
               run: |
-                git config --global --add safe.directory $(pwd)
                 wget -q https://github.com/FriendsOfShopware/shopware-cli/releases/download/${SHOPWARE_CLI_VERSION}/shopware-cli_${SHOPWARE_CLI_VERSION}_Linux_x86_64.tar.gz
                 tar -zxf shopware-cli_*.tar.gz shopware-cli
-                mv shopware-cli /usr/bin/shopware-cli
+                mv shopware-cli /opt/bin/shopware-cli
                 rm shopware-cli_*.tar.gz
 
             - name: Build & create zip
               run: |
-                  if test -f "./src/Resources/app/administration/package.json"; then
-                      npm install --prefix "./src/Resources/app/administration/" --unsafe-perm
-                  fi
-                  
-                  if test -f "./src/Resources/app/storefront/package.json"; then
-                      npm install --prefix "./src/Resources/app/storefront/" --unsafe-perm
-                  fi
-                  
-                  if test -f "./src/Resources/app/package.json"; then
-                      npm install --prefix "./src/Resources/app/" --unsafe-perm
-                  fi
-                  
-                  rm -rf ./.github
-                  
-                  /usr/bin/shopware-cli extension zip . --disable-git
+                git config --global --add safe.directory $(pwd)
+                cp -r "./${EXTENSION_NAME}" "/plugins/${EXTENSION_NAME}"
+                pack-plugin "${EXTENSION_NAME}"
 
             - name: Upload Artefact
               uses: actions/upload-artifact@v2
