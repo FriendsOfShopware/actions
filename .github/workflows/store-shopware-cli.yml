@@ -60,7 +60,6 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.ghToken }}
 
             - name: Validate Zip
-              if: steps.checkTag.outputs.exists != 'true'
               run: shopware-cli extension validate $(pwd)/${EXTENSION_NAME}.zip
 
             - name: Update store page
