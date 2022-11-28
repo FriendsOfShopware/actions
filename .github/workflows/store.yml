@@ -106,7 +106,7 @@ jobs:
             - name: Generate changelog
               if: steps.checkTag.outputs.exists != 'true'
               id: tag_version
-              uses: mathieudutour/github-tag-action@v6.0
+              uses: mathieudutour/github-tag-action@v6.1
               with:
                   tag_prefix: ""
                   github_token: ${{ secrets.ghToken }}
