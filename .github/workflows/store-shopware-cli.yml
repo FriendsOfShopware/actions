@@ -43,7 +43,7 @@ jobs:
                   shopware-cli extension zip --disable-git .
 
             - name: Upload Artefact
-              uses: actions/upload-artifact@v2
+              uses: actions/upload-artifact@v3
               with:
                   name: ${{ env.EXTENSION_NAME }}
                   path: ${{ env.EXTENSION_NAME }}.zip
