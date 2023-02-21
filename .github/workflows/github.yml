@@ -16,7 +16,7 @@ on:
         description: 'The shopware-cli version to build the extension with'
         required: false
         type: string
-        default: '0.1.51'
+        default: '0.1.52'
     secrets:
       ghToken:
         required: true
