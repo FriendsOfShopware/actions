@@ -96,10 +96,8 @@ jobs:
               run: |
                   git config user.name "GitHub Actions Bot"
                   git config user.email "<>"
-                  git add -f *
-                  if [[ `git status --porcelain` ]]; then
-                    git commit -m "chore: Build release"
-                  fi
+                  git add -f .
+                  git commit -m "chore: Build release"
                   git tag ${EXTENSION_VERSION}
                   git push origin ${EXTENSION_VERSION}
 
