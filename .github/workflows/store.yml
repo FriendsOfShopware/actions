@@ -37,7 +37,7 @@ jobs:
 
             - name: Build & create zip
               run: |
-                  shopware-cli extension zip . --disable-git
+                  SHOPWARE_PROJECT_ROOT=/opt/shopware shopware-cli extension zip . --disable-git
 
             - name: Upload Artefact
               uses: actions/upload-artifact@v3
