@@ -39,6 +39,8 @@ jobs:
                 rm shopware-cli_*.tar.gz
 
             - name: Build & create zip
+              env:
+                NODE_OPTIONS: --openssl-legacy-provider
               run: |
                   shopware-cli extension zip --disable-git .
 
