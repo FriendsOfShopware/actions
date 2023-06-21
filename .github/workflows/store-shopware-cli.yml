@@ -9,7 +9,7 @@ on:
               description: 'The shopware-cli version to build the extension with'
               required: false
               type: string
-              default: '0.1.73'
+              default: 'latest'
         secrets:
           accountUser:
             required: true
@@ -22,7 +22,6 @@ env:
     EXTENSION_NAME: ${{ inputs.extensionName }}
     SHOPWARE_CLI_ACCOUNT_EMAIL: ${{ secrets.accountUser }}
     SHOPWARE_CLI_ACCOUNT_PASSWORD: ${{ secrets.accountPassword }}
-    SHOPWARE_CLI_VERSION: ${{ inputs.cliVersion }}
 
 jobs:
     Build:
@@ -31,12 +30,12 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v3
 
-            - name: Download shopware-cli
-              run: |
-                wget -q https://github.com/FriendsOfShopware/shopware-cli/releases/download/${SHOPWARE_CLI_VERSION}/shopware-cli_Linux_x86_64.tar.gz
-                tar -zxf shopware-cli_*.tar.gz shopware-cli
-                sudo mv shopware-cli /usr/bin/shopware-cli
-                rm shopware-cli_*.tar.gz
+            - name: Install shopware-cli
+              uses: FriendsOfShopware/shopware-cli@v1
+              with:
+                version: ${{ inputs.cliVersion }}
+              env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Build & create zip
               env:
