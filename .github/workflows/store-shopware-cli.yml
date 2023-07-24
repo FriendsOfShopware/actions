@@ -41,7 +41,7 @@ jobs:
               env:
                 NODE_OPTIONS: --openssl-legacy-provider
               run: |
-                  shopware-cli extension zip --git-commit ${{ github.sha }} .
+                  shopware-cli extension zip --git-commit ${{ github.sha }} . --release
                   mv ${{ env.EXTENSION_NAME }}-${{ github.sha }}.zip ${{ env.EXTENSION_NAME }}.zip
 
             - name: Upload Artefact
