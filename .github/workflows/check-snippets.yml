@@ -2,8 +2,6 @@
 
 on:
   workflow_call:
-    paths:
-      - 'src/**/snippet/*.json'
 
 jobs:
   check:
