@@ -77,6 +77,10 @@ jobs:
               env:
                 GITHUB_TOKEN: ${{ secrets.ghToken }}
 
+            - name: Extract Changelog
+              if: steps.checkTag.outputs.exists != 'true'
+              run: shopware-cli extension get-changelog $(pwd)/${EXTENSION_NAME}.zip > /tmp/changelog.txt
+
             - name: Unzip
               run: |
                   unzip -o -q "${EXTENSION_NAME}.zip" -d ./toDeploy
@@ -86,17 +90,7 @@ jobs:
                   rm -rf ./toDeploy
                   rm -rf ./vendor
 
-            - name: Generate changelog
-              if: steps.checkTag.outputs.exists != 'true'
-              id: tag_version
-              uses: mathieudutour/github-tag-action@v6.1
-              with:
-                  tag_prefix: ""
-                  github_token: ${{ secrets.ghToken }}
-                  custom_tag: ${{ env.EXTENSION_VERSION }}
-                  dry_run: true
-
-            - name: commit
+            - name: Commit
               if: steps.checkTag.outputs.exists != 'true'
               run: |
                   git config user.name "GitHub Actions Bot"
@@ -113,4 +107,4 @@ jobs:
                   artifacts: /tmp/${{ env.EXTENSION_NAME }}.zip
                   tag: ${{ env.EXTENSION_VERSION }}
                   name: ${{ env.EXTENSION_VERSION }}
-                  body: ${{ steps.tag_version.outputs.changelog }}
+                  bodyFile: /tmp/changelog.txt
