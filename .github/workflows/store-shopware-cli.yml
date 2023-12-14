@@ -48,7 +48,7 @@ jobs:
                   mv ${{ env.EXTENSION_NAME }}-${{ github.sha }}.zip ${{ env.EXTENSION_NAME }}.zip
 
             - name: Upload Artefact
-              uses: actions/upload-artifact@v3
+              uses: actions/upload-artifact@v4
               with:
                   name: ${{ env.EXTENSION_NAME }}
                   path: ${{ env.EXTENSION_NAME }}.zip
