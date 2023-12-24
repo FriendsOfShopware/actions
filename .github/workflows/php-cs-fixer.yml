@@ -17,6 +17,6 @@ jobs:
             ${{ runner.OS }}-${{ github.repository }}-phpcsfixer-
 
       - name: PHP-CS-Fixer
-        uses: docker://oskarstark/php-cs-fixer-ga
+        uses: docker://shyim/php-cs-fixer:latest
         with:
           args: --diff --dry-run --rules @PER-CS2.0,@PER-CS2.0:risky --allow-risky=yes .
