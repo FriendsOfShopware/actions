@@ -49,7 +49,7 @@ jobs:
               run: |
                   echo "EXTENSION_VERSION=$(jq ".version" composer.json -r)" >> $GITHUB_ENV
 
-            - uses: mukunku/tag-exists-action@v1.5.0
+            - uses: mukunku/tag-exists-action@v1.6.0
               id: checkTag
               with:
                   tag: ${{ env.EXTENSION_VERSION }}
