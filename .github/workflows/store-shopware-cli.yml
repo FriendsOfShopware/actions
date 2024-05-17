@@ -66,7 +66,7 @@ jobs:
               run: shopware-cli extension validate $(pwd)/${EXTENSION_NAME}.zip
 
             - name: Update store page
-              if: steps.checkTag.outputs.exists != 'true' || contains(github.event.head_commit.message, '[store update]')
+              if: contains(github.event.head_commit.message, '[store update]')
               run: shopware-cli account producer extension info push $(pwd)/
 
             - name: StoreUpload
