@@ -34,7 +34,7 @@ jobs:
                 fetch-depth: 0
 
             - name: Install shopware-cli
-              uses: FriendsOfShopware/shopware-cli-action@v1
+              uses: FriendsOfShopware/shopware-cli-action@v2
               with:
                 version: ${{ inputs.cliVersion }}
 
