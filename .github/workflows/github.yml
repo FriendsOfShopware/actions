@@ -96,7 +96,7 @@ jobs:
           custom_tag: ${{ env.EXTENSION_VERSION }}
           dry_run: true
 
-      - name: commit
+      - name: Commit
         if: steps.checkTag.outputs.exists != 'true'
         run: |
           git config user.name "GitHub Actions Bot"
