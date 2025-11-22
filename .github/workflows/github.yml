@@ -38,7 +38,7 @@ jobs:
             git config --global --add safe.directory $(pwd)
 
       - name: Install shopware-cli
-        uses: FriendsOfShopware/shopware-cli-action@v2
+        uses: FriendsOfShopware/shopware-cli-action@v3
         with:
           version: ${{ inputs.cliVersion }}
 
