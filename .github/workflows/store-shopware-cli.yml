@@ -96,7 +96,7 @@ jobs:
                   git add -f .
                   git commit -m "chore: Build release"
                   git tag ${EXTENSION_VERSION}
-                  git push origin ${EXTENSION_VERSION}
+                  git push origin tag ${EXTENSION_VERSION}
 
             - name: Create a GitHub release
               if: steps.checkTag.outputs.exists != 'true'
