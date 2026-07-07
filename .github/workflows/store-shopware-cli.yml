@@ -12,21 +12,37 @@ on:
               default: 'latest'
         secrets:
           accountUser:
-            required: true
+            description: "Your Shopware account user (deprecated, use clientId/clientSecret instead)"
+            required: false
           accountPassword:
-            required: true
+            description: "Your Shopware account password (deprecated, use clientId/clientSecret instead)"
+            required: false
+          clientId:
+            description: "Your Shopware account client ID for API authentication"
+            required: false
+          clientSecret:
+            description: "Your Shopware account client secret for API authentication"
+            required: false
           ghToken:
+            description: "GitHub token"
             required: true
 
 env:
     EXTENSION_NAME: ${{ inputs.extensionName }}
     SHOPWARE_CLI_ACCOUNT_EMAIL: ${{ secrets.accountUser }}
     SHOPWARE_CLI_ACCOUNT_PASSWORD: ${{ secrets.accountPassword }}
+    SHOPWARE_CLI_ACCOUNT_CLIENT_ID: ${{ secrets.clientId }}
+    SHOPWARE_CLI_ACCOUNT_CLIENT_SECRET: ${{ secrets.clientSecret }}
 
 jobs:
     Build:
         runs-on: ubuntu-latest
         steps:
+            - name: Check for deprecated authentication
+              shell: bash
+              if: env.SHOPWARE_CLI_ACCOUNT_EMAIL != ''
+              run: echo "::warning::The 'accountUser' and 'accountPassword' secrets are deprecated. Please use 'clientId' and 'clientSecret' instead. Generate credentials at https://account.shopware.com/producer/development"
+
             - name: Checkout
               uses: actions/checkout@v7
               with:
@@ -45,7 +61,7 @@ jobs:
                   shopware-cli extension zip --git-commit ${{ github.sha }} . --release
                   mv ${{ env.EXTENSION_NAME }}-${{ github.sha }}.zip ${{ env.EXTENSION_NAME }}.zip
 
-            - name: Upload Artefact
+            - name: Upload artefact
               uses: actions/upload-artifact@v7
               with:
                   name: ${{ env.EXTENSION_NAME }}
@@ -62,20 +78,20 @@ jobs:
               env:
                   GITHUB_TOKEN: ${{ secrets.ghToken }}
 
-            - name: Validate Zip
+            - name: Validate zip
               run: shopware-cli extension validate $(pwd)/${EXTENSION_NAME}.zip
 
             - name: Update store page
               if: contains(github.event.head_commit.message, '[store update]')
               run: shopware-cli account producer extension info push $(pwd)/
 
-            - name: StoreUpload
+            - name: Upload to store
               if: steps.checkTag.outputs.exists != 'true'
               run: shopware-cli account producer extension upload $(pwd)/${EXTENSION_NAME}.zip
               env:
                 GITHUB_TOKEN: ${{ secrets.ghToken }}
 
-            - name: Extract Changelog
+            - name: Extract changelog
               if: steps.checkTag.outputs.exists != 'true'
               run: shopware-cli extension get-changelog $(pwd)/${EXTENSION_NAME}.zip > /tmp/changelog.txt
 
