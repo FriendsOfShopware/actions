@@ -1,0 +1,196 @@
+name: Publish to Store
+
+on:
+  workflow_dispatch:
+    inputs:
+      previousRef:
+        description: Previous release tag or commit (auto-detected when empty)
+        type: string
+        required: false
+        default: ''
+  workflow_call:
+    inputs:
+      model:
+        description: DeepSeek model used by communique
+        type: string
+        required: false
+        default: deepseek-flash
+      previousRef:
+        description: Previous release tag or commit (auto-detected when empty)
+        type: string
+        required: false
+        default: ''
+    secrets:
+      DEEPSEEK_API_KEY:
+        required: true
+      SHOPWARE_CLI_ACCOUNT_CLIENT_ID:
+        required: true
+      SHOPWARE_CLI_ACCOUNT_CLIENT_SECRET:
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: read
+
+concurrency:
+  group: publish-to-store-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: store
+      url: https://store.shopware.com
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Install shopware-cli
+        uses: shopware/shopware-cli-action@v3
+
+      - name: Determine extension name and release version
+        id: release
+        shell: bash
+        run: |
+          echo "EXTENSION_NAME=$(shopware-cli extension get-name .)" >> "$GITHUB_ENV"
+          version=$(shopware-cli extension get-version .)
+          if git show-ref --verify --quiet "refs/tags/$version" || git show-ref --verify --quiet "refs/tags/v$version"; then
+            echo "::error::Version $version already has a release tag. Bump the extension version before publishing."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Determine previous release reference
+        id: baseline
+        env:
+          PREVIOUS_REF: ${{ inputs.previousRef }}
+        shell: bash
+        run: |
+          previous_ref="$PREVIOUS_REF"
+          if [ -z "$previous_ref" ]; then
+            if ! previous_ref=$(git describe --tags --abbrev=0 HEAD 2>/dev/null); then
+              previous_ref=$(git rev-list --max-parents=0 HEAD | tail -n 1)
+            fi
+          fi
+          git rev-parse --verify --end-of-options "${previous_ref}^{commit}" > /dev/null
+          echo "previousRef=$previous_ref" >> "$GITHUB_OUTPUT"
+          echo "Generating release notes since $previous_ref"
+
+      - name: Install communique
+        uses: jdx/mise-action@v3
+        with:
+          install_args: communique@1.6.2
+
+      - name: Generate changelog with communique
+        env:
+          OPENAI_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+          RELEASE_MODEL: ${{ inputs.model || 'deepseek-flash' }}
+          PREVIOUS_REF: ${{ steps.baseline.outputs.previousRef }}
+        shell: bash
+        run: |
+          args=(generate "$RELEASE_VERSION" "$PREVIOUS_REF")
+          args+=(--provider=openai --base-url https://api.deepseek.com
+            --model "$RELEASE_MODEL" --draft "$RUNNER_TEMP/draft.json")
+          mise exec communique@1.6.2 -- communique "${args[@]}"
+
+      - name: Update CHANGELOG.md
+        env:
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+          from pathlib import Path
+
+          temp = Path(os.environ['RUNNER_TEMP'])
+          draft = json.loads((temp / 'draft.json').read_text())
+          if draft.get('schema_version') != 1 or draft.get('tag') != os.environ['RELEASE_VERSION']:
+              raise SystemExit('Unexpected communique draft schema or release version')
+          for field in ('changelog', 'release_title', 'release_body'):
+              if not isinstance(draft.get(field), str) or not draft[field].strip():
+                  raise SystemExit(f'communique draft has an empty or invalid {field}')
+          notes = draft['changelog'].strip()
+          # shopware-cli treats every Markdown heading as a version boundary.
+          # Keep communique's categories without introducing extra version entries.
+          notes = re.sub(r'^#{1,6}[ \t]+(.+?)[ \t]*#*$', r'**\1**', notes, flags=re.MULTILINE)
+          (temp / 'release-title.txt').write_text(draft['release_title'].strip())
+          (temp / 'release-notes.md').write_text(draft['release_body'].strip() + '\n')
+          path = Path('CHANGELOG.md')
+          previous = path.read_text() if path.exists() else ''
+          heading = '# ' + os.environ['RELEASE_VERSION']
+          # Replace an existing entry for this version while preserving older entries.
+          lines = previous.splitlines(keepends=True)
+          retained = []
+          skipping = False
+          for line in lines:
+              if line.startswith('# '):
+                  skipping = line.strip() == heading
+              if not skipping:
+                  retained.append(line)
+          path.write_text(heading + '\n\n' + notes + '\n\n' + ''.join(retained).lstrip())
+          PY
+
+      # Build from the working tree so the generated changelog is included.
+      # store-release@main currently assumes a SHA-suffixed ZIP even with disableGit.
+      - name: Build release archive
+        shell: bash
+        run: shopware-cli extension zip . --disable-git --release --filename "$EXTENSION_NAME.zip"
+
+      - name: Validate release archive
+        shell: bash
+        run: |
+          shopware-cli extension validate "$EXTENSION_NAME.zip"
+          shopware-cli extension get-changelog "$EXTENSION_NAME.zip" > "$RUNNER_TEMP/store-changelog.txt"
+          test -s "$RUNNER_TEMP/store-changelog.txt"
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.EXTENSION_NAME }}
+          path: ${{ env.EXTENSION_NAME }}.zip
+          if-no-files-found: error
+
+      - name: Upload release draft
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-draft
+          path: ${{ runner.temp }}/draft.json
+          if-no-files-found: error
+
+      - name: Release Extension to Store
+        env:
+          SHOPWARE_CLI_ACCOUNT_CLIENT_ID: ${{ secrets.SHOPWARE_CLI_ACCOUNT_CLIENT_ID }}
+          SHOPWARE_CLI_ACCOUNT_CLIENT_SECRET: ${{ secrets.SHOPWARE_CLI_ACCOUNT_CLIENT_SECRET }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: shopware-cli account producer extension upload "$EXTENSION_NAME.zip"
+
+      - name: Create release tag
+        env:
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f CHANGELOG.md
+          git diff --cached --quiet || git commit -m "chore: Changelog for $RELEASE_VERSION"
+          git tag "$RELEASE_VERSION"
+          git push origin "refs/tags/$RELEASE_VERSION"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+        shell: bash
+        run: |
+          gh release create "$RELEASE_VERSION" "$EXTENSION_NAME.zip" \
+            --verify-tag --title "$(cat "$RUNNER_TEMP/release-title.txt")" \
+            --notes-file "$RUNNER_TEMP/release-notes.md"
