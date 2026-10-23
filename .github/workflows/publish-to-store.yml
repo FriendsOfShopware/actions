@@ -72,7 +72,21 @@ jobs:
         run: |
           previous_ref="$PREVIOUS_REF"
           if [ -z "$previous_ref" ]; then
-            if ! previous_ref=$(git describe --tags --abbrev=0 HEAD 2>/dev/null); then
+            # Release tags can point to a build commit whose parent is on the
+            # source branch. Those tags are not themselves ancestors of HEAD.
+            while IFS= read -r tag; do
+              [[ "$tag" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+([.-].*)?$ ]] || continue
+              if git merge-base --is-ancestor "$tag" HEAD; then
+                previous_ref="$tag"
+                break
+              fi
+              if parent=$(git rev-parse --verify "${tag}^{commit}^" 2>/dev/null) &&
+                git merge-base --is-ancestor "$parent" HEAD; then
+                previous_ref="$tag"
+                break
+              fi
+            done < <(git tag --sort=-version:refname)
+            if [ -z "$previous_ref" ]; then
               previous_ref=$(git rev-list --max-parents=0 HEAD | tail -n 1)
             fi
           fi
