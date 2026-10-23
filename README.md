@@ -28,8 +28,10 @@ The workflow uses [communique](https://github.com/jdx/communique) with DeepSeek'
 OpenAI-compatible API (`https://api.deepseek.com`) to generate a JSON draft from
 Git history and pull request context. `DEEPSEEK_API_KEY` is passed to communique
 as `OPENAI_API_KEY`.
-Communique selects the previous reachable version tag as its baseline, falling
-back to the initial commit when there are no tags. The workflow prepends
+When `previousRef` is omitted, the workflow finds the latest reachable tag with
+`git describe --tags --abbrev=0 HEAD`, falling back to the initial commit when
+there are no reachable tags. It validates the reference and passes it explicitly
+to communique. The workflow prepends
 an entry to `CHANGELOG.md` using shopware-cli's `# <version>` format and converts
 category headings in the draft's `changelog` field to bold labels for compatibility.
 The GitHub release uses `release_title` and `release_body` unchanged. The draft,

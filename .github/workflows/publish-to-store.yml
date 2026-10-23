@@ -64,6 +64,22 @@ jobs:
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
+      - name: Determine previous release reference
+        id: baseline
+        env:
+          PREVIOUS_REF: ${{ inputs.previousRef }}
+        shell: bash
+        run: |
+          previous_ref="$PREVIOUS_REF"
+          if [ -z "$previous_ref" ]; then
+            if ! previous_ref=$(git describe --tags --abbrev=0 HEAD 2>/dev/null); then
+              previous_ref=$(git rev-list --max-parents=0 HEAD | tail -n 1)
+            fi
+          fi
+          git rev-parse --verify --end-of-options "${previous_ref}^{commit}" > /dev/null
+          echo "previousRef=$previous_ref" >> "$GITHUB_OUTPUT"
+          echo "Generating release notes since $previous_ref"
+
       - name: Install communique
         uses: jdx/mise-action@v3
         with:
@@ -75,13 +91,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_VERSION: ${{ steps.release.outputs.version }}
           RELEASE_MODEL: ${{ inputs.model || 'deepseek-flash' }}
-          PREVIOUS_REF: ${{ inputs.previousRef }}
+          PREVIOUS_REF: ${{ steps.baseline.outputs.previousRef }}
         shell: bash
         run: |
-          args=(generate "$RELEASE_VERSION")
-          if [ -n "$PREVIOUS_REF" ]; then
-            args+=("$PREVIOUS_REF")
-          fi
+          args=(generate "$RELEASE_VERSION" "$PREVIOUS_REF")
           args+=(--provider=openai --base-url https://api.deepseek.com
             --model "$RELEASE_MODEL" --draft "$RUNNER_TEMP/draft.json")
           mise exec communique@1.6.2 -- communique "${args[@]}"
