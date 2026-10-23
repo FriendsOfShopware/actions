@@ -47,6 +47,11 @@ release for the version declared by the extension. Communique is pinned to 1.6.2
 The reusable workflow also exposes
 `workflow_dispatch` for repositories containing it directly.
 
+The publish job uses the `store` GitHub environment with the deployment URL
+`https://store.shopware.com`. Configure protection rules on this environment in
+the calling extension repository under **Settings → Environments → store**.
+Any required approval applies before the publish job starts.
+
 The build and release steps use shopware-cli directly because
 [`store-release@main`](https://github.com/shopware/github-actions/blob/main/store-release/action.yml)
 delegates to a build action whose ZIP renaming currently fails with `disableGit`.

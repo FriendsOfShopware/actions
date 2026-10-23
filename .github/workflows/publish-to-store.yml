@@ -40,6 +40,9 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    environment:
+      name: store
+      url: https://store.shopware.com
     steps:
       - name: Checkout
         uses: actions/checkout@v7
