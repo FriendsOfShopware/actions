@@ -40,8 +40,8 @@ the release tag; the selected branch is not updated. Bump the extension version
 before dispatching; an existing version tag stops the workflow before upload.
 
 Configure the three repository secrets shown above. `GITHUB_TOKEN` is supplied
-automatically. Optional `with` inputs are `extensionName` (defaults to the repository
-name), `model` (defaults to `deepseek-flash`), and `previousRef` (auto-detected when
+automatically. The extension name is detected with `shopware-cli extension get-name .`.
+Optional `with` inputs are `model` (defaults to `deepseek-flash`) and `previousRef` (auto-detected when
 omitted). For example, set `previousRef: '3.6.0'` to generate changes since that
 release for the version declared by the extension. Communique is pinned to 1.6.2.
 The reusable workflow also exposes

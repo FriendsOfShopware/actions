@@ -10,11 +10,6 @@ on:
         default: ''
   workflow_call:
     inputs:
-      extensionName:
-        description: Extension name (defaults to the repository name)
-        type: string
-        required: false
-        default: ''
       model:
         description: DeepSeek model used by communique
         type: string
@@ -45,8 +40,6 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    env:
-      EXTENSION_NAME: ${{ inputs.extensionName || github.event.repository.name }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -56,10 +49,11 @@ jobs:
       - name: Install shopware-cli
         uses: shopware/shopware-cli-action@v3
 
-      - name: Determine release version
+      - name: Determine extension name and release version
         id: release
         shell: bash
         run: |
+          echo "EXTENSION_NAME=$(shopware-cli extension get-name .)" >> "$GITHUB_ENV"
           version=$(shopware-cli extension get-version .)
           if git show-ref --verify --quiet "refs/tags/$version" || git show-ref --verify --quiet "refs/tags/v$version"; then
             echo "::error::Version $version already has a release tag. Bump the extension version before publishing."
