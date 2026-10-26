@@ -19,15 +19,15 @@ jobs:
   publish:
     uses: FriendsOfShopware/actions/.github/workflows/publish-to-store.yml@main
     secrets:
-      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       SHOPWARE_CLI_ACCOUNT_CLIENT_ID: ${{ secrets.SHOPWARE_CLI_ACCOUNT_CLIENT_ID }}
       SHOPWARE_CLI_ACCOUNT_CLIENT_SECRET: ${{ secrets.SHOPWARE_CLI_ACCOUNT_CLIENT_SECRET }}
 ```
 
-The workflow uses [communique](https://github.com/jdx/communique) with DeepSeek's
-OpenAI-compatible API (`https://api.deepseek.com`) to generate a JSON draft from
-Git history and pull request context. `DEEPSEEK_API_KEY` is passed to communique
-as `OPENAI_API_KEY`.
+The workflow uses [communique](https://github.com/jdx/communique) with an
+OpenAI-compatible API to generate a JSON draft from Git history and pull request
+context. It defaults to DeepSeek (`https://api.deepseek.com`) and passes the
+`OPENAI_API_KEY` secret to communique.
 When `previousRef` is omitted, the workflow checks version tags in descending
 version order. It selects the first tag whose commit or parent is reachable from
 `HEAD`, including tags on separate build commits created by the Store release
@@ -44,8 +44,11 @@ before dispatching; an existing version tag stops the workflow before upload.
 
 Configure the three repository secrets shown above. `GITHUB_TOKEN` is supplied
 automatically. The extension name is detected with `shopware-cli extension get-name .`.
-Optional `with` inputs are `model` (defaults to `deepseek-flash`) and `previousRef` (auto-detected when
-omitted). For example, set `previousRef: '3.6.0'` to generate changes since that
+Optional `with` inputs are `model` (defaults to `deepseek-flash`), `base-url`
+(defaults to `https://api.deepseek.com`), and `previousRef` (auto-detected when
+omitted). For a different OpenAI-compatible API, set `base-url` and `model` and
+provide its API key through the `OPENAI_API_KEY` secret.
+For example, set `previousRef: '3.6.0'` to generate changes since that
 release for the version declared by the extension. Communique is pinned to 1.6.2.
 The reusable workflow also exposes
 `workflow_dispatch` for repositories containing it directly.

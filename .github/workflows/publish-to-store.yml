@@ -3,6 +3,16 @@ name: Publish to Store
 on:
   workflow_dispatch:
     inputs:
+      model:
+        description: Model used by communique
+        type: string
+        required: false
+        default: deepseek-flash
+      base-url:
+        description: OpenAI-compatible API base URL used by communique
+        type: string
+        required: false
+        default: https://api.deepseek.com
       previousRef:
         description: Previous release tag or commit (auto-detected when empty)
         type: string
@@ -11,16 +21,23 @@ on:
   workflow_call:
     inputs:
       model:
-        description: Copilot model used by communique
+        description: Model used by communique
         type: string
         required: false
-        default: gpt-6-luna
+        default: deepseek-flash
+      base-url:
+        description: OpenAI-compatible API base URL used by communique
+        type: string
+        required: false
+        default: https://api.deepseek.com
       previousRef:
         description: Previous release tag or commit (auto-detected when empty)
         type: string
         required: false
         default: ''
     secrets:
+      OPENAI_API_KEY:
+        required: true
       SHOPWARE_CLI_ACCOUNT_CLIENT_ID:
         required: true
       SHOPWARE_CLI_ACCOUNT_CLIENT_SECRET:
@@ -29,7 +46,6 @@ on:
 permissions:
   contents: write
   pull-requests: read
-  copilot-requests: write
 
 concurrency:
   group: publish-to-store-${{ github.repository }}
@@ -93,10 +109,6 @@ jobs:
           echo "previousRef=$previous_ref" >> "$GITHUB_OUTPUT"
           echo "Generating release notes since $previous_ref"
 
-      - name: Start Copilot proxy
-        id: copilot
-        uses: shyim/copilot-proxy-action@v1
-
       - name: Install communique
         uses: jdx/mise-action@v3
         with:
@@ -104,14 +116,16 @@ jobs:
 
       - name: Generate changelog with communique
         env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_VERSION: ${{ steps.release.outputs.version }}
           RELEASE_MODEL: ${{ inputs.model || 'deepseek-flash' }}
+          RELEASE_BASE_URL: ${{ inputs.base-url || 'https://api.deepseek.com' }}
           PREVIOUS_REF: ${{ steps.baseline.outputs.previousRef }}
         shell: bash
         run: |
           args=(generate "$RELEASE_VERSION" "$PREVIOUS_REF")
-          args+=(--provider=openai --base-url ${{ steps.copilot.outputs.base-url }}
+          args+=(--provider=openai --base-url "$RELEASE_BASE_URL"
             --model "$RELEASE_MODEL" --draft "$RUNNER_TEMP/draft.json")
           mise exec communique@1.6.2 -- communique "${args[@]}"
 
