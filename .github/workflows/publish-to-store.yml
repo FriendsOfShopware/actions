@@ -172,7 +172,7 @@ jobs:
       # store-release@main currently assumes a SHA-suffixed ZIP even with disableGit.
       - name: Build release archive
         shell: bash
-        run: shopware-cli extension zip . --disable-git --release --filename "$EXTENSION_NAME.zip"
+        run: shopware-cli extension package . --disable-git --release --filename "$EXTENSION_NAME.zip"
 
       - name: Validate release archive
         shell: bash
