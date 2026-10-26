@@ -29,6 +29,7 @@ on:
 permissions:
   contents: write
   pull-requests: read
+  copilot-requests: write
 
 concurrency:
   group: publish-to-store-${{ github.repository }}
