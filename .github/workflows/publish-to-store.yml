@@ -11,18 +11,16 @@ on:
   workflow_call:
     inputs:
       model:
-        description: DeepSeek model used by communique
+        description: Copilot model used by communique
         type: string
         required: false
-        default: deepseek-flash
+        default: gpt-6-luna
       previousRef:
         description: Previous release tag or commit (auto-detected when empty)
         type: string
         required: false
         default: ''
     secrets:
-      DEEPSEEK_API_KEY:
-        required: true
       SHOPWARE_CLI_ACCOUNT_CLIENT_ID:
         required: true
       SHOPWARE_CLI_ACCOUNT_CLIENT_SECRET:
@@ -94,6 +92,10 @@ jobs:
           echo "previousRef=$previous_ref" >> "$GITHUB_OUTPUT"
           echo "Generating release notes since $previous_ref"
 
+      - name: Start Copilot proxy
+        id: copilot
+        uses: shyim/copilot-proxy-action@v1
+
       - name: Install communique
         uses: jdx/mise-action@v3
         with:
@@ -101,7 +103,6 @@ jobs:
 
       - name: Generate changelog with communique
         env:
-          OPENAI_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_VERSION: ${{ steps.release.outputs.version }}
           RELEASE_MODEL: ${{ inputs.model || 'deepseek-flash' }}
@@ -109,7 +110,7 @@ jobs:
         shell: bash
         run: |
           args=(generate "$RELEASE_VERSION" "$PREVIOUS_REF")
-          args+=(--provider=openai --base-url https://api.deepseek.com
+          args+=(--provider=openai --base-url ${{ steps.copilot.outputs.base-url }}
             --model "$RELEASE_MODEL" --draft "$RUNNER_TEMP/draft.json")
           mise exec communique@1.6.2 -- communique "${args[@]}"
 
