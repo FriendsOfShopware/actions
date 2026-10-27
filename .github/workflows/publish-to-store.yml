@@ -3,6 +3,11 @@ name: Publish to Store
 on:
   workflow_dispatch:
     inputs:
+      cliVersion:
+        description: The shopware-cli version to build the extension with
+        type: string
+        required: false
+        default: latest
       model:
         description: Model used by communique
         type: string
@@ -20,6 +25,11 @@ on:
         default: ''
   workflow_call:
     inputs:
+      cliVersion:
+        description: The shopware-cli version to build the extension with
+        type: string
+        required: false
+        default: latest
       model:
         description: Model used by communique
         type: string
@@ -66,6 +76,8 @@ jobs:
 
       - name: Install shopware-cli
         uses: shopware/shopware-cli-action@v3
+        with:
+          version: ${{ inputs.cliVersion || 'latest' }}
 
       - name: Determine extension name and release version
         id: release
@@ -171,6 +183,8 @@ jobs:
       # Build from the working tree so the generated changelog is included.
       # store-release@main currently assumes a SHA-suffixed ZIP even with disableGit.
       - name: Build release archive
+        env:
+          NODE_OPTIONS: --openssl-legacy-provider
         shell: bash
         run: shopware-cli extension package . --disable-git --release --filename "$EXTENSION_NAME.zip"
 
@@ -195,6 +209,14 @@ jobs:
           path: ${{ runner.temp }}/draft.json
           if-no-files-found: error
 
+      - name: Update store page
+        if: contains(github.event.head_commit.message, '[store update]')
+        env:
+          SHOPWARE_CLI_ACCOUNT_CLIENT_ID: ${{ secrets.SHOPWARE_CLI_ACCOUNT_CLIENT_ID }}
+          SHOPWARE_CLI_ACCOUNT_CLIENT_SECRET: ${{ secrets.SHOPWARE_CLI_ACCOUNT_CLIENT_SECRET }}
+        shell: bash
+        run: shopware-cli account producer extension info push "$PWD/"
+
       - name: Release Extension to Store
         env:
           SHOPWARE_CLI_ACCOUNT_CLIENT_ID: ${{ secrets.SHOPWARE_CLI_ACCOUNT_CLIENT_ID }}
@@ -203,6 +225,17 @@ jobs:
         shell: bash
         run: shopware-cli account producer extension upload "$EXTENSION_NAME.zip"
 
+      - name: Extract built extension for release tag
+        shell: bash
+        run: |
+          release_dir=$(mktemp -d "$RUNNER_TEMP/store-release.XXXXXX")
+          unzip -o -q "$EXTENSION_NAME.zip" -d "$release_dir"
+          test -d "$release_dir/$EXTENSION_NAME"
+          mv "$EXTENSION_NAME.zip" "$RUNNER_TEMP/$EXTENSION_NAME.zip"
+          find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf -- {} +
+          cp -a "$release_dir/$EXTENSION_NAME/." .
+          rm -rf ./vendor "$release_dir"
+
       - name: Create release tag
         env:
           RELEASE_VERSION: ${{ steps.release.outputs.version }}
@@ -210,8 +243,8 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -f CHANGELOG.md
-          git diff --cached --quiet || git commit -m "chore: Changelog for $RELEASE_VERSION"
+          git add --all --force .
+          git diff --cached --quiet || git commit -m "chore: Build release $RELEASE_VERSION"
           git tag "$RELEASE_VERSION"
           git push origin "refs/tags/$RELEASE_VERSION"
 
@@ -221,6 +254,6 @@ jobs:
           RELEASE_VERSION: ${{ steps.release.outputs.version }}
         shell: bash
         run: |
-          gh release create "$RELEASE_VERSION" "$EXTENSION_NAME.zip" \
+          gh release create "$RELEASE_VERSION" "$RUNNER_TEMP/$EXTENSION_NAME.zip" \
             --verify-tag --title "$(cat "$RUNNER_TEMP/release-title.txt")" \
             --notes-file "$RUNNER_TEMP/release-notes.md"

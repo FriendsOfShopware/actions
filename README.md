@@ -38,13 +38,15 @@ category headings in the draft's `changelog` field to bold labels for compatibil
 The GitHub release uses `release_title` and `release_body` unchanged. The draft,
 including its coverage review, is saved as the `release-draft` artifact. It builds and
 validates the extension, uploads it to the Shopware Store, and creates a version
-tag and GitHub release with the ZIP attached. The changelog commit is included in
-the release tag; the selected branch is not updated. Bump the extension version
+tag and GitHub release with the ZIP attached. The release tag contains the extracted
+build, including compiled assets and the generated changelog, with `vendor` removed.
+The selected branch is not updated. A commit message containing `[store update]`
+also triggers a Store page update when the calling event supplies `head_commit`. Bump the extension version
 before dispatching; an existing version tag stops the workflow before upload.
 
 Configure the three repository secrets shown above. `GITHUB_TOKEN` is supplied
 automatically. The extension name is detected with `shopware-cli extension get-name .`.
-Optional `with` inputs are `model` (defaults to `deepseek-flash`), `base-url`
+Optional `with` inputs are `cliVersion` (defaults to `latest`), `model` (defaults to `deepseek-flash`), `base-url`
 (defaults to `https://api.deepseek.com`), and `previousRef` (auto-detected when
 omitted). For a different OpenAI-compatible API, set `base-url` and `model` and
 provide its API key through the `OPENAI_API_KEY` secret.
