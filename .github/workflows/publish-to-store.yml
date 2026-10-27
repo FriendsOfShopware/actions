@@ -183,8 +183,6 @@ jobs:
       # Build from the working tree so the generated changelog is included.
       # store-release@main currently assumes a SHA-suffixed ZIP even with disableGit.
       - name: Build release archive
-        env:
-          NODE_OPTIONS: --openssl-legacy-provider
         shell: bash
         run: shopware-cli extension package . --disable-git --release --filename "$EXTENSION_NAME.zip"
 
@@ -208,14 +206,6 @@ jobs:
           name: release-draft
           path: ${{ runner.temp }}/draft.json
           if-no-files-found: error
-
-      - name: Update store page
-        if: contains(github.event.head_commit.message, '[store update]')
-        env:
-          SHOPWARE_CLI_ACCOUNT_CLIENT_ID: ${{ secrets.SHOPWARE_CLI_ACCOUNT_CLIENT_ID }}
-          SHOPWARE_CLI_ACCOUNT_CLIENT_SECRET: ${{ secrets.SHOPWARE_CLI_ACCOUNT_CLIENT_SECRET }}
-        shell: bash
-        run: shopware-cli account producer extension info push "$PWD/"
 
       - name: Release Extension to Store
         env:

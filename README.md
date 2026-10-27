@@ -40,8 +40,7 @@ including its coverage review, is saved as the `release-draft` artifact. It buil
 validates the extension, uploads it to the Shopware Store, and creates a version
 tag and GitHub release with the ZIP attached. The release tag contains the extracted
 build, including compiled assets and the generated changelog, with `vendor` removed.
-The selected branch is not updated. A commit message containing `[store update]`
-also triggers a Store page update when the calling event supplies `head_commit`. Bump the extension version
+The selected branch is not updated. Bump the extension version
 before dispatching; an existing version tag stops the workflow before upload.
 
 Configure the three repository secrets shown above. `GITHUB_TOKEN` is supplied
